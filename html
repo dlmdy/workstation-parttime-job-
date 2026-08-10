@@ -89,7 +89,7 @@ body{
   background:#fff;border:1px solid var(--line);border-radius:var(--radius);
   box-shadow:var(--shadow);margin-top:16px;overflow:hidden;
 }
-.today-head{padding:14px 18px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,#fbfcfe,#fff);}
+.today-head{padding:14px 18px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:linear-gradient(180deg,#fbfcfe,#fff);}
 .today-head h2{margin:0;font-size:16px;font-weight:700;}
 .today-head .date{margin-left:auto;color:var(--muted);font-size:13px;font-weight:500;}
 .today-list{padding:6px 8px 10px;}
@@ -209,6 +209,29 @@ svg.chart{display:block;width:100%;height:auto;}
 .insight .li{display:flex;gap:8px;}
 .insight .li + .li{margin-top:6px;}
 
+/* ---------- search ---------- */
+.searchbox{display:flex;gap:9px;align-items:center;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:6px 10px 6px 13px;transition:border-color .15s,box-shadow .15s;}
+.searchbox:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.searchbox svg{flex:none;color:var(--faint);}
+.searchbox input{flex:1;min-width:60px;border:none;outline:none;background:transparent;font-size:16px;font-family:inherit;color:var(--text);min-height:38px;padding:0;}
+@media(max-width:768px){.searchbox input{min-height:44px;}}
+mark{background:#ffeeb0;color:#7a4b00;border-radius:3px;padding:0 1px;font-weight:700;}
+.no{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Courier New",monospace;font-size:12px;color:var(--muted);letter-spacing:-.2px;white-space:nowrap;}
+.no mark{font-weight:800;}
+.slabel{font-size:12.5px;color:var(--muted);font-weight:700;margin-right:2px;}
+.adv{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px;}
+@media(max-width:768px){.adv{grid-template-columns:1fr 1fr;}}
+.hist{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.hist .h{border:1px dashed #d6dde8;background:#fbfcfe;border-radius:18px;padding:0 12px;font-size:13px;color:var(--muted);cursor:pointer;min-height:34px;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+.hist .h:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-soft);}
+@media(max-width:768px){.hist .h{min-height:40px;font-size:14px;}}
+.sumbar{display:flex;gap:22px;flex-wrap:wrap;padding:11px 14px;background:#f8fafc;border:1px solid var(--line2);border-radius:11px;margin-bottom:14px;}
+.sumbar .it{display:flex;flex-direction:column;gap:1px;}
+.sumbar .it .k{font-size:11.5px;color:var(--muted);font-weight:650;}
+.sumbar .it .v{font-size:16px;font-weight:750;font-variant-numeric:tabular-nums;}
+.kbd{display:inline-block;border:1px solid #d6dde8;border-bottom-width:2px;border-radius:5px;padding:0 5px;font-size:11px;font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--muted);background:#fbfcfe;}
+@media(max-width:768px){.kbd{display:none;}}
+
 /* ---------- modal ---------- */
 .mask{position:fixed;inset:0;background:rgba(20,28,44,.42);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;}
 .mask.on{display:flex;}
@@ -252,6 +275,10 @@ svg.chart{display:block;width:100%;height:auto;}
     </div>
     <div class="spacer"></div>
     <div class="tools">
+      <button class="btn sm" onclick="gotoSearch()" title="搜索订单（Ctrl+K）">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+        搜索
+      </button>
       <button class="btn sm green" onclick="exportXlsx()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13l6 5"/><path d="M15 13l-6 5"/></svg>
         导出 Excel
@@ -284,6 +311,7 @@ svg.chart{display:block;width:100%;height:auto;}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d92d20" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
       <h2>今天要处理的</h2>
       <span class="date" id="todayDate"></span>
+      <button class="btn sm" onclick="searchByOverdue()">查全部逾期</button>
     </div>
     <div class="today-list" id="todayList"></div>
   </section>
@@ -294,6 +322,7 @@ svg.chart{display:block;width:100%;height:auto;}
   <!-- Tabs -->
   <nav class="tabs" id="tabs">
     <button data-v="orders" class="on">订单管理</button>
+    <button data-v="search">搜索订单</button>
     <button data-v="pay">收款看板</button>
     <button data-v="stats">收入统计</button>
     <button data-v="rate">时薪分析</button>
@@ -315,9 +344,63 @@ svg.chart{display:block;width:100%;height:auto;}
           <button class="chip" data-f="在做">在做</button>
           <button class="chip" data-f="待验收">待验收</button>
           <button class="chip" data-f="已收款">已收款</button>
-          <input class="search" id="q" type="search" placeholder="搜索客户 / 工作内容">
+          <input class="search" id="q" type="search" placeholder="快速筛选：订单号 / 客户 / 项目名">
+          <button class="btn sm" onclick="gotoSearch(document.getElementById('q').value.trim())">高级搜索</button>
         </div>
         <div id="orderTable"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 搜索订单 -->
+  <section class="panel" id="p-search">
+    <div class="card">
+      <div class="card-h">
+        <h3>搜索订单</h3>
+        <span class="hint">订单号 / 客户名 / 项目名，多个词用空格分隔（同时满足）</span>
+        <div class="spacer"></div>
+        <span class="kbd">Ctrl + K</span>
+      </div>
+      <div class="card-b">
+        <div class="searchbox">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+          <input id="sq" type="search" autocomplete="off" placeholder="如：SO-20260810-01 / 橙子科技 / 落地页">
+          <button class="btn sm" onclick="resetSearch()">重置</button>
+        </div>
+
+        <div class="filters" style="margin-top:12px">
+          <span class="slabel">搜索范围</span>
+          <button class="chip sfld on" data-s="all">全部字段</button>
+          <button class="chip sfld" data-s="no">订单号</button>
+          <button class="chip sfld" data-s="client">客户名</button>
+          <button class="chip sfld" data-s="title">项目名</button>
+          <button class="chip sfld" data-s="note">备注</button>
+        </div>
+
+        <div class="adv">
+          <div class="fld"><label>状态</label><select id="sf_status"></select></div>
+          <div class="fld"><label>客户来源</label><select id="sf_source"></select></div>
+          <div class="fld"><label>交付日期从</label><input type="date" id="sf_from"></div>
+          <div class="fld"><label>交付日期到</label><input type="date" id="sf_to"></div>
+        </div>
+
+        <div class="filters" style="margin-top:12px">
+          <span class="slabel">快捷条件</span>
+          <button class="chip squick" data-q="overdue">逾期未收</button>
+          <button class="chip squick" data-q="unpaid">未结清</button>
+          <button class="chip squick" data-q="month">本月交付</button>
+          <button class="chip squick" data-q="nohours">未填耗时</button>
+        </div>
+
+        <div id="histWrap" style="margin-top:14px"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>搜索结果</h3><span class="hint" id="sresHint"></span></div>
+      <div class="card-b">
+        <div id="sresSum"></div>
+        <div id="sresTable"></div>
       </div>
     </div>
   </section>
@@ -402,6 +485,10 @@ svg.chart{display:block;width:100%;height:auto;}
     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
     订单
   </button>
+  <button data-v="search">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+    搜索
+  </button>
   <button data-v="pay">
     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
     收款
@@ -427,6 +514,7 @@ svg.chart{display:block;width:100%;height:auto;}
     </div>
     <div class="modal-b">
       <div class="frm">
+        <div class="fld full"><label>订单号（自动生成，可手动修改）</label><input id="f_no" type="text" placeholder="SO-20260810-01"></div>
         <div class="fld"><label>客户名称 *</label><input id="f_client" type="text" placeholder="如：星野文化"></div>
         <div class="fld"><label>客户来源</label><select id="f_source"></select></div>
         <div class="fld full"><label>工作内容 *</label><input id="f_title" type="text" placeholder="如：公众号头图 3 张"></div>
@@ -473,11 +561,13 @@ var CATS    = ['设计','文案','编程','剪辑','咨询','运营','其他'];
 var STATUS  = ['洽谈','在做','待验收','已收款'];
 var PIE_COLORS = ['#2b5fd9','#12855b','#e8a33d','#6d43c4','#d9578a','#0f9bb0','#8a97a8','#c26a2b'];
 
-var state = { orders: [], seeded: false, noticeAt: 0 };
+var state = { orders: [], seeded: false, noticeAt: 0, history: [] };
 var view = 'orders';
 var filter = '全部';
 var keyword = '';
 var editingId = null;
+/* 搜索模块状态 */
+var sc = { kw:'', field:'all', status:'', source:'', from:'', to:'', quick:{} };
 
 /* ---------- 日期工具 ---------- */
 function pad(n){ return n < 10 ? '0' + n : '' + n; }
@@ -538,13 +628,42 @@ function load(){
   if(raw){
     try{
       var o = JSON.parse(raw);
-      if(o && Array.isArray(o.orders)){ state = o; if(!state.noticeAt) state.noticeAt = 0; return; }
+      if(o && Array.isArray(o.orders)){
+        state = o;
+        if(!state.noticeAt) state.noticeAt = 0;
+        if(!Array.isArray(state.history)) state.history = [];
+        migrateNo();
+        return;
+      }
     }catch(e){}
   }
-  state = { orders: sampleData(), seeded: true, noticeAt: 0 };
+  state = { orders: sampleData(), seeded: true, noticeAt: 0, history: [] };
+  migrateNo();
   save();
 }
 function uid(){ return 'o' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+/* ---------- 订单号：SO-YYYYMMDD-NN ---------- */
+function genNo(dateStr){
+  var base = String(dateStr || todayStr()).replace(/-/g, '');
+  if(base.length !== 8) base = todayStr().replace(/-/g, '');
+  var prefix = 'SO-' + base + '-';
+  var max = 0;
+  state.orders.forEach(function(o){
+    if(o.no && String(o.no).indexOf(prefix) === 0){
+      var n = parseInt(String(o.no).slice(prefix.length), 10);
+      if(!isNaN(n) && n > max) max = n;
+    }
+  });
+  return prefix + pad(max + 1);
+}
+/* 老数据 / 导入数据自动补号：按交付日期先后编号，已有号码保留 */
+function migrateNo(){
+  var lack = state.orders.filter(function(o){ return !o.no; });
+  if(!lack.length) return;
+  lack.sort(function(a, b){ return (a.deliver || '').localeCompare(b.deliver || ''); });
+  lack.forEach(function(o){ o.no = genNo(o.deliver || todayStr()); });
+}
 
 /* ---------- 示例数据（相对当前日期） ---------- */
 function sampleData(){
@@ -586,6 +705,7 @@ function render(){
   renderToday();
   renderKpi();
   renderOrders();
+  renderSearch();
   renderPay();
   renderStats();
   renderRate();
@@ -603,7 +723,7 @@ function renderToday(){
     items.push({
       lv:'crit',
       t1:'逾期未收款 · ' + o.client + ' ' + money(dueOf(o)),
-      t2:'「' + o.title + '」应收日 ' + cnDate(payDueOf(o)) + '，已逾期 ' + d + ' 天',
+      t2:(o.no ? o.no + ' · ' : '') + '「' + o.title + '」应收日 ' + cnDate(payDueOf(o)) + '，已逾期 ' + d + ' 天',
       acts:[
         { txt:'标记全额收款', cls:'btn sm green', fn:'markPaid(\'' + o.id + '\')' },
         { txt:'编辑', cls:'btn sm', fn:'openForm(\'' + o.id + '\')' }
@@ -615,7 +735,7 @@ function renderToday(){
     items.push({
       lv:'crit',
       t1:'今天要交付 · ' + o.client,
-      t2:'「' + o.title + '」' + money(quoteOf(o)) + '，当前状态：' + o.status,
+      t2:(o.no ? o.no + ' · ' : '') + '「' + o.title + '」' + money(quoteOf(o)) + '，当前状态：' + o.status,
       acts:[
         { txt:'转待验收', cls:'btn sm', fn:'setStatus(\'' + o.id + '\',\'待验收\')' },
         { txt:'编辑', cls:'btn sm', fn:'openForm(\'' + o.id + '\')' }
@@ -720,32 +840,20 @@ function statusTag(s){
   return '<span class="tag ' + (m[s]||'gray') + '">' + s + '</span>';
 }
 
-/* ----- 订单表 ----- */
-function renderOrders(){
-  var list = state.orders.slice();
-  if(filter !== '全部') list = list.filter(function(o){ return o.status === filter; });
-  if(keyword){
-    var k = keyword.toLowerCase();
-    list = list.filter(function(o){
-      return (o.client||'').toLowerCase().indexOf(k) >= 0 ||
-             (o.title||'').toLowerCase().indexOf(k) >= 0 ||
-             (o.note||'').toLowerCase().indexOf(k) >= 0;
-    });
-  }
-  var order = { '在做':0, '待验收':1, '洽谈':2, '已收款':3 };
-  list.sort(function(a,b){
-    var d = (order[a.status]||9) - (order[b.status]||9);
-    if(d !== 0) return d;
-    return (a.deliver||'9999').localeCompare(b.deliver||'9999');
-  });
+/* ----- 关键词高亮 ----- */
+function rxEsc(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function hl(text, kws){
+  var s = esc(text);
+  if(!kws || !kws.length) return s;
+  var parts = kws.filter(Boolean).map(function(k){ return rxEsc(esc(k)); });
+  if(!parts.length) return s;
+  try{
+    return s.replace(new RegExp('(' + parts.join('|') + ')', 'gi'), '<mark>$1</mark>');
+  }catch(e){ return s; }
+}
 
-  document.getElementById('orderCount').textContent = '共 ' + state.orders.length + ' 单，显示 ' + list.length + ' 单';
-
-  if(!list.length){
-    document.getElementById('orderTable').innerHTML = '<div class="empty">没有符合条件的订单</div>';
-    return;
-  }
-
+/* ----- 订单表格（订单页 / 搜索页共用） ----- */
+function ordersTableHtml(list, kws){
   var rows = list.map(function(o){
     var od = isOverduePay(o) || isDueToday(o) || isLateDeliver(o);
     var dueTxt = dueOf(o) > 0
@@ -755,8 +863,9 @@ function renderOrders(){
       ? ((isDueToday(o) || isLateDeliver(o)) ? '<span class="money-out" style="font-weight:650">' + cnDate(o.deliver) + (isDueToday(o) ? '（今天）' : '（逾期）') + '</span>' : cnDate(o.deliver))
       : '—';
     return '<tr class="' + (od ? 'od' : '') + '">' +
-      '<td data-l="客户"><span class="cli">' + esc(o.client) + '</span> <span class="tag gray">' + esc(o.source||'其他') + '</span></td>' +
-      '<td data-l="工作内容" class="full"><div>' + esc(o.title) + '</div><div class="desc">' + esc(o.cat||'其他') + (o.note ? ' · ' + esc(o.note) : '') + '</div></td>' +
+      '<td data-l="订单号"><span class="no">' + hl(o.no || '—', kws) + '</span></td>' +
+      '<td data-l="客户"><span class="cli">' + hl(o.client, kws) + '</span> <span class="tag gray">' + esc(o.source||'其他') + '</span></td>' +
+      '<td data-l="工作内容" class="full"><div>' + hl(o.title, kws) + '</div><div class="desc">' + esc(o.cat||'其他') + (o.note ? ' · ' + hl(o.note, kws) : '') + '</div></td>' +
       '<td data-l="报价" class="num">' + money(quoteOf(o)) + '</td>' +
       '<td data-l="已收" class="num money-in">' + (paidOf(o) > 0 ? money(paidOf(o)) : '<span style="color:#9aa4b2">—</span>') + '</td>' +
       '<td data-l="待收" class="num">' + dueTxt + '</td>' +
@@ -770,11 +879,183 @@ function renderOrders(){
       '</div></td>' +
       '</tr>';
   }).join('');
-
-  document.getElementById('orderTable').innerHTML =
-    '<table><thead><tr>' +
-    '<th>客户</th><th>工作内容</th><th>报价</th><th>已收</th><th>待收</th><th>状态</th><th>交付日</th><th>耗时</th><th>实收时薪</th><th></th>' +
+  return '<table><thead><tr>' +
+    '<th>订单号</th><th>客户</th><th>工作内容</th><th>报价</th><th>已收</th><th>待收</th><th>状态</th><th>交付日</th><th>耗时</th><th>实收时薪</th><th></th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function sortOrders(list){
+  var order = { '在做':0, '待验收':1, '洽谈':2, '已收款':3 };
+  return list.sort(function(a,b){
+    var d = (order[a.status]||9) - (order[b.status]||9);
+    if(d !== 0) return d;
+    return (a.deliver||'9999').localeCompare(b.deliver||'9999');
+  });
+}
+
+/* ----- 订单表 ----- */
+function renderOrders(){
+  var list = state.orders.slice();
+  if(filter !== '全部') list = list.filter(function(o){ return o.status === filter; });
+  var kws = [];
+  if(keyword){
+    kws = keyword.split(/\s+/).filter(Boolean);
+    list = list.filter(function(o){
+      var hay = [(o.no||''), (o.client||''), (o.title||''), (o.note||'')].join(' ').toLowerCase();
+      return kws.every(function(k){ return hay.indexOf(k.toLowerCase()) >= 0; });
+    });
+  }
+  sortOrders(list);
+
+  document.getElementById('orderCount').textContent = '共 ' + state.orders.length + ' 单，显示 ' + list.length + ' 单';
+
+  if(!list.length){
+    document.getElementById('orderTable').innerHTML = '<div class="empty">没有符合条件的订单</div>';
+    return;
+  }
+  document.getElementById('orderTable').innerHTML = ordersTableHtml(list, kws);
+}
+
+/* =========================================================
+   搜索模块
+   ========================================================= */
+function matchSearch(o){
+  /* 关键词：多个词 AND，按选定字段范围匹配 */
+  var kws = sc.kw.split(/\s+/).filter(Boolean);
+  if(kws.length){
+    var hay;
+    if(sc.field === 'no') hay = (o.no || '');
+    else if(sc.field === 'client') hay = (o.client || '');
+    else if(sc.field === 'title') hay = (o.title || '');
+    else if(sc.field === 'note') hay = (o.note || '');
+    else hay = [(o.no||''), (o.client||''), (o.title||''), (o.note||''), (o.cat||''), (o.source||'')].join(' ');
+    hay = hay.toLowerCase();
+    for(var i = 0; i < kws.length; i++){
+      if(hay.indexOf(kws[i].toLowerCase()) < 0) return false;
+    }
+  }
+  if(sc.status && o.status !== sc.status) return false;
+  if(sc.source && (o.source || '其他') !== sc.source) return false;
+  if(sc.from && (!o.deliver || o.deliver < sc.from)) return false;
+  if(sc.to && (!o.deliver || o.deliver > sc.to)) return false;
+  if(sc.quick.overdue && !isOverduePay(o)) return false;
+  if(sc.quick.unpaid && !(dueOf(o) > 0 && isActive(o))) return false;
+  if(sc.quick.month && monthKey(o.deliver) !== todayStr().slice(0,7)) return false;
+  if(sc.quick.nohours && hoursOf(o) > 0) return false;
+  return true;
+}
+
+function hasCondition(){
+  return !!(sc.kw || sc.status || sc.source || sc.from || sc.to ||
+    sc.quick.overdue || sc.quick.unpaid || sc.quick.month || sc.quick.nohours);
+}
+
+function renderSearch(){
+  renderHistory();
+  var hint = document.getElementById('sresHint');
+  var sum = document.getElementById('sresSum');
+  var tbl = document.getElementById('sresTable');
+
+  if(!hasCondition()){
+    hint.textContent = '';
+    sum.innerHTML = '';
+    tbl.innerHTML = '<div class="empty">' +
+      '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#9aa4b2" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>' +
+      '输入订单号、客户名或项目名开始搜索，也可以只用下面的筛选条件</div>';
+    return;
+  }
+
+  var list = state.orders.filter(matchSearch);
+  sortOrders(list);
+  var kws = sc.kw.split(/\s+/).filter(Boolean);
+
+  hint.textContent = '命中 ' + list.length + ' / 共 ' + state.orders.length + ' 单';
+
+  if(!list.length){
+    sum.innerHTML = '';
+    tbl.innerHTML = '<div class="empty">没有匹配的订单，试试减少关键词或放宽筛选条件</div>';
+    return;
+  }
+
+  var q = 0, p = 0, d = 0, ov = 0, h = 0;
+  list.forEach(function(o){
+    q += quoteOf(o); p += paidOf(o); h += hoursOf(o);
+    if(isActive(o)){ d += dueOf(o); if(isOverduePay(o)) ov += dueOf(o); }
+  });
+  sum.innerHTML = '<div class="sumbar">' +
+    '<div class="it"><span class="k">命中订单</span><span class="v">' + list.length + ' 单</span></div>' +
+    '<div class="it"><span class="k">报价合计</span><span class="v">' + money(q) + '</span></div>' +
+    '<div class="it"><span class="k">已收</span><span class="v money-in">' + money(p) + '</span></div>' +
+    '<div class="it"><span class="k">待收</span><span class="v ' + (d > 0 ? 'money-wait' : '') + '">' + money(d) + '</span></div>' +
+    '<div class="it"><span class="k">其中逾期</span><span class="v ' + (ov > 0 ? 'money-out' : '') + '">' + money(ov) + '</span></div>' +
+    '<div class="it"><span class="k">合计耗时</span><span class="v">' + (Math.round(h*10)/10) + ' h</span></div>' +
+    '</div>';
+  tbl.innerHTML = ordersTableHtml(list, kws);
+}
+
+/* ----- 搜索历史 ----- */
+function pushHistory(k){
+  k = (k || '').trim();
+  if(k.length < 2) return;
+  state.history = (state.history || []).filter(function(x){ return x !== k; });
+  state.history.unshift(k);
+  if(state.history.length > 8) state.history = state.history.slice(0, 8);
+  save();
+  renderHistory();
+}
+function renderHistory(){
+  var box = document.getElementById('histWrap');
+  var h = state.history || [];
+  if(!h.length){ box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="hist"><span class="slabel">最近搜索</span>' +
+    h.map(function(k, i){
+      return '<button class="h" onclick="useHistory(' + i + ')">' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>' +
+        esc(k) + '</button>';
+    }).join('') +
+    '<button class="h" onclick="clearHistory()" style="border-style:solid;color:#d92d20;border-color:#f3cfcb">清除历史</button></div>';
+}
+function useHistory(i){
+  var k = (state.history || [])[i];
+  if(k == null) return;
+  sc.kw = k;
+  document.getElementById('sq').value = k;
+  renderSearch();
+}
+function clearHistory(){
+  state.history = [];
+  save();
+  renderHistory();
+  toast('搜索历史已清除');
+}
+
+function resetSearch(){
+  sc = { kw:'', field:'all', status:'', source:'', from:'', to:'', quick:{} };
+  document.getElementById('sq').value = '';
+  document.getElementById('sf_status').value = '';
+  document.getElementById('sf_source').value = '';
+  document.getElementById('sf_from').value = '';
+  document.getElementById('sf_to').value = '';
+  Array.prototype.forEach.call(document.querySelectorAll('.sfld'), function(b){
+    b.classList.toggle('on', b.getAttribute('data-s') === 'all');
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.squick'), function(b){ b.classList.remove('on'); });
+  renderSearch();
+}
+function gotoSearch(kw){
+  switchView('search');
+  var el = document.getElementById('sq');
+  if(typeof kw === 'string'){ sc.kw = kw; el.value = kw; renderSearch(); }
+  setTimeout(function(){ el.focus(); el.select(); }, 120);
+}
+function searchByOverdue(){
+  resetSearch();
+  sc.quick.overdue = true;
+  Array.prototype.forEach.call(document.querySelectorAll('.squick'), function(b){
+    b.classList.toggle('on', b.getAttribute('data-q') === 'overdue');
+  });
+  switchView('search');
+  renderSearch();
 }
 
 /* ----- 收款看板 ----- */
@@ -1128,6 +1409,7 @@ function openForm(id){
   var o = id ? getOrder(id) : null;
   document.getElementById('mTitle').textContent = o ? '编辑订单' : '新增订单';
   document.getElementById('delBtn').style.display = o ? '' : 'none';
+  document.getElementById('f_no').value = o ? (o.no || '') : genNo(todayStr());
   document.getElementById('f_client').value = o ? (o.client||'') : '';
   document.getElementById('f_source').value = o ? (o.source||'其他') : SOURCES[0];
   document.getElementById('f_title').value = o ? (o.title||'') : '';
@@ -1158,7 +1440,12 @@ function saveForm(){
   var quote = Number(document.getElementById('f_quote').value) || 0;
   var recv = Number(document.getElementById('f_received').value) || 0;
   if(st === '已收款') recv = quote;
+  var no = document.getElementById('f_no').value.trim();
+  if(!no) no = genNo(todayStr());
+  var dup = state.orders.filter(function(x){ return x.no === no && x.id !== editingId; });
+  if(dup.length){ toast('订单号「' + no + '」已存在，请换一个'); document.getElementById('f_no').focus(); return; }
   var data = {
+    no: no,
     client: client,
     source: document.getElementById('f_source').value,
     title: title,
@@ -1258,6 +1545,7 @@ function importJSON(input){
     var clean = arr.map(function(o){
       return {
         id: o.id || uid(),
+        no: o.no ? String(o.no) : '',
         client: String(o.client || '未命名客户'),
         source: SOURCES.indexOf(o.source) >= 0 ? o.source : '其他',
         cat: CATS.indexOf(o.cat) >= 0 ? o.cat : '其他',
@@ -1274,7 +1562,7 @@ function importJSON(input){
     });
     confirmBox('导入恢复', '共读取到 <b>' + clean.length + '</b> 条订单。<br><br>选择「覆盖」会替换当前 ' + state.orders.length + ' 条数据；如果只想追加，请点下方「追加合并」。',
       function(){
-        state.orders = clean; save(); closeConfirm(); render();
+        state.orders = clean; migrateNo(); save(); closeConfirm(); render();
         toast('已覆盖导入 ' + clean.length + ' 条');
       });
     var okBtn = document.getElementById('cOk');
@@ -1292,7 +1580,7 @@ function importJSON(input){
       state.orders.forEach(function(o){ exist[o.id] = true; });
       var added = 0;
       clean.forEach(function(o){ if(!exist[o.id]){ state.orders.push(o); added++; } });
-      save(); closeConfirm(); render();
+      migrateNo(); save(); closeConfirm(); render();
       toast('已追加 ' + added + ' 条（跳过重复 ' + (clean.length - added) + ' 条）');
     };
     input.value = '';
@@ -1494,10 +1782,10 @@ function buildXlsx(sheets){
 
 /* 样式索引：1=表头 2=金额 3=红色金额 4=绿色金额 5=普通带边框 */
 var S_H = 1, S_M = 2, S_MR = 3, S_MG = 4, S_T = 5;
-function T(v){ return { v:v, t:'s', s:S_T }; }
-function H(v){ return { v:v, t:'s', s:S_H }; }
-function M(v, color){ return { v:Number(v)||0, t:'n', s: color === 'r' ? S_MR : color === 'g' ? S_MG : S_M }; }
-function N(v){ return { v:Number(v)||0, t:'n', s:S_T }; }
+function xlT(v){ return { v:v, t:'s', s:S_T }; }
+function xlH(v){ return { v:v, t:'s', s:S_H }; }
+function xlM(v, color){ return { v:Number(v)||0, t:'n', s: color === 'r' ? S_MR : color === 'g' ? S_MG : S_M }; }
+function xlN(v){ return { v:Number(v)||0, t:'n', s:S_T }; }
 
 function exportXlsx(){
   try{
@@ -1505,9 +1793,9 @@ function exportXlsx(){
 
     /* Sheet1 订单明细 */
     var rows1 = [[
-      H('交付日期'), H('客户'), H('来源'), H('类型'), H('工作内容'), H('状态'),
-      H('报价'), H('已收'), H('待收'), H('收款到期日'), H('是否逾期'),
-      H('耗时(h)'), H('报价时薪'), H('实收时薪'), H('备注')
+      xlH('订单号'), xlH('交付日期'), xlH('客户'), xlH('来源'), xlH('类型'), xlH('工作内容'), xlH('状态'),
+      xlH('报价'), xlH('已收'), xlH('待收'), xlH('收款到期日'), xlH('是否逾期'),
+      xlH('耗时(h)'), xlH('报价时薪'), xlH('实收时薪'), xlH('备注')
     ]];
     var tQ = 0, tP = 0, tD = 0, tH = 0;
     os.forEach(function(o){
@@ -1515,26 +1803,26 @@ function exportXlsx(){
       tQ += quoteOf(o); tP += paidOf(o); tH += hoursOf(o);
       if(isActive(o)) tD += dueOf(o);
       rows1.push([
-        T(o.deliver || ''), T(o.client), T(o.source || '其他'), T(o.cat || '其他'), T(o.title), T(o.status),
-        M(quoteOf(o)), M(paidOf(o), paidOf(o) > 0 ? 'g' : ''), M(dueOf(o), dueOf(o) > 0 ? 'r' : ''),
-        T(payDueOf(o) || ''), T(ov ? '逾期未收' : (dueOf(o) > 0 ? '待收' : '已结清')),
-        N(hoursOf(o)),
-        M(quoteRate(o) || 0), M(paidRate(o) || 0, 'g'),
-        T(o.note || '')
+        xlT(o.no || ''), xlT(o.deliver || ''), xlT(o.client), xlT(o.source || '其他'), xlT(o.cat || '其他'), xlT(o.title), xlT(o.status),
+        xlM(quoteOf(o)), xlM(paidOf(o), paidOf(o) > 0 ? 'g' : ''), xlM(dueOf(o), dueOf(o) > 0 ? 'r' : ''),
+        xlT(payDueOf(o) || ''), xlT(ov ? '逾期未收' : (dueOf(o) > 0 ? '待收' : '已结清')),
+        xlN(hoursOf(o)),
+        xlM(quoteRate(o) || 0), xlM(paidRate(o) || 0, 'g'),
+        xlT(o.note || '')
       ]);
     });
     rows1.push([]);
-    rows1.push([ T('合计'), T(''), T(''), T(''), T(os.length + ' 单'), T(''),
-      M(tQ), M(tP, 'g'), M(tD, 'r'), T(''), T(''), N(tH),
-      M(tH > 0 ? tQ/tH : 0), M(tH > 0 ? tP/tH : 0, 'g'), T('') ]);
+    rows1.push([ xlT('合计'), xlT(''), xlT(''), xlT(''), xlT(''), xlT(os.length + ' 单'), xlT(''),
+      xlM(tQ), xlM(tP, 'g'), xlM(tD, 'r'), xlT(''), xlT(''), xlN(tH),
+      xlM(tH > 0 ? tQ/tH : 0), xlM(tH > 0 ? tP/tH : 0, 'g'), xlT('') ]);
 
     /* Sheet2 月度统计 */
     var agg = monthAgg(12);
-    var rows2 = [[ H('月份'), H('订单数'), H('报价合计'), H('已收'), H('待收'), H('回款率') ]];
+    var rows2 = [[ xlH('月份'), xlH('订单数'), xlH('报价合计'), xlH('已收'), xlH('待收'), xlH('回款率') ]];
     agg.forEach(function(d){
       rows2.push([
-        T(d.key), N(d.count), M(d.quote), M(d.paid, 'g'), M(d.due, d.due > 0 ? 'r' : ''),
-        T(d.quote > 0 ? Math.round(d.paid/d.quote*100) + '%' : '—')
+        xlT(d.key), xlN(d.count), xlM(d.quote), xlM(d.paid, 'g'), xlM(d.due, d.due > 0 ? 'r' : ''),
+        xlT(d.quote > 0 ? Math.round(d.paid/d.quote*100) + '%' : '—')
       ]);
     });
 
@@ -1546,21 +1834,21 @@ function exportXlsx(){
       if(!srcMap[s]) srcMap[s] = { n:0, q:0, p:0 };
       srcMap[s].n++; srcMap[s].q += quoteOf(o); srcMap[s].p += paidOf(o);
     });
-    var rows3 = [[ H('客户来源'), H('订单数'), H('成交金额'), H('已收'), H('金额占比') ]];
+    var rows3 = [[ xlH('客户来源'), xlH('订单数'), xlH('成交金额'), xlH('已收'), xlH('金额占比') ]];
     var totQ = 0;
     Object.keys(srcMap).forEach(function(k){ totQ += srcMap[k].q; });
     Object.keys(srcMap).sort(function(a,b){ return srcMap[b].q - srcMap[a].q; }).forEach(function(k){
-      rows3.push([ T(k), N(srcMap[k].n), M(srcMap[k].q), M(srcMap[k].p, 'g'),
-        T(totQ > 0 ? Math.round(srcMap[k].q/totQ*100) + '%' : '—') ]);
+      rows3.push([ xlT(k), xlN(srcMap[k].n), xlM(srcMap[k].q), xlM(srcMap[k].p, 'g'),
+        xlT(totQ > 0 ? Math.round(srcMap[k].q/totQ*100) + '%' : '—') ]);
     });
     rows3.push([]);
-    rows3.push([ H('单子类型'), H('订单数'), H('总耗时(h)'), H('报价时薪'), H('实收时薪') ]);
+    rows3.push([ xlH('单子类型'), xlH('订单数'), xlH('总耗时(h)'), xlH('报价时薪'), xlH('实收时薪') ]);
     catAgg().forEach(function(m){
-      rows3.push([ T(m.cat), N(m.count), N(m.hours), M(m.qRate), M(m.pRate, 'g') ]);
+      rows3.push([ xlT(m.cat), xlN(m.count), xlN(m.hours), xlM(m.qRate), xlM(m.pRate, 'g') ]);
     });
 
     var blob = buildXlsx([
-      { name:'订单明细', rows:rows1, widths:[12,14,10,8,34,9,12,12,12,13,11,9,12,12,28] },
+      { name:'订单明细', rows:rows1, widths:[17,12,14,10,8,34,9,12,12,12,13,11,9,12,12,28] },
       { name:'月度统计', rows:rows2, widths:[12,9,14,14,14,10] },
       { name:'来源与时薪', rows:rows3, widths:[14,9,14,14,12] }
     ]);
@@ -1576,7 +1864,7 @@ function exportXlsx(){
    ========================================================= */
 function switchView(v){
   view = v;
-  ['orders','pay','stats','rate'].forEach(function(x){
+  ['orders','search','pay','stats','rate'].forEach(function(x){
     document.getElementById('p-' + x).classList.toggle('on', x === v);
   });
   Array.prototype.forEach.call(document.querySelectorAll('#tabs button, #bnav button'), function(b){
@@ -1593,9 +1881,10 @@ function init(){
   Array.prototype.forEach.call(document.querySelectorAll('#tabs button, #bnav button'), function(b){
     b.addEventListener('click', function(){ switchView(b.getAttribute('data-v')); });
   });
-  Array.prototype.forEach.call(document.querySelectorAll('.chip'), function(c){
+  /* 订单页状态筛选 */
+  Array.prototype.forEach.call(document.querySelectorAll('.chip[data-f]'), function(c){
     c.addEventListener('click', function(){
-      Array.prototype.forEach.call(document.querySelectorAll('.chip'), function(x){ x.classList.remove('on'); });
+      Array.prototype.forEach.call(document.querySelectorAll('.chip[data-f]'), function(x){ x.classList.remove('on'); });
       c.classList.add('on');
       filter = c.getAttribute('data-f');
       renderOrders();
@@ -1605,8 +1894,49 @@ function init(){
     keyword = e.target.value.trim();
     renderOrders();
   });
+
+  /* 搜索模块 */
+  fillSelect(document.getElementById('sf_status'), STATUS);
+  fillSelect(document.getElementById('sf_source'), SOURCES);
+  document.getElementById('sf_status').insertAdjacentHTML('afterbegin', '<option value="">不限状态</option>');
+  document.getElementById('sf_source').insertAdjacentHTML('afterbegin', '<option value="">不限来源</option>');
+  document.getElementById('sf_status').value = '';
+  document.getElementById('sf_source').value = '';
+
+  var sq = document.getElementById('sq');
+  sq.addEventListener('input', function(e){ sc.kw = e.target.value.trim(); renderSearch(); });
+  sq.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ pushHistory(sc.kw); sq.blur(); }
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.sfld'), function(b){
+    b.addEventListener('click', function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.sfld'), function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+      sc.field = b.getAttribute('data-s');
+      renderSearch();
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.squick'), function(b){
+    b.addEventListener('click', function(){
+      var k = b.getAttribute('data-q');
+      sc.quick[k] = !sc.quick[k];
+      b.classList.toggle('on', !!sc.quick[k]);
+      renderSearch();
+    });
+  });
+  ['sf_status','sf_source','sf_from','sf_to'].forEach(function(id){
+    document.getElementById(id).addEventListener('change', function(e){
+      sc[id.replace('sf_','')] = e.target.value;
+      renderSearch();
+    });
+  });
+
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape'){ closeForm(); closeConfirm(); }
+    if((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')){
+      e.preventDefault();
+      if(!document.getElementById('mask').classList.contains('on')) gotoSearch();
+    }
   });
 
   load();
